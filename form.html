@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>高速公路危害点照片采集</title>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:#f0f2f5;color:#1a1a1a;min-height:100vh;padding-bottom:80px}
+.header{background:linear-gradient(135deg,#1a73e8,#0d47a1);color:#fff;padding:20px 16px 16px;position:sticky;top:0;z-index:100}
+.header h1{font-size:18px;font-weight:600;margin-bottom:4px}
+.header p{font-size:12px;opacity:.8}
+.container{max-width:480px;margin:0 auto;padding:12px}
+.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card.route-section{background:linear-gradient(135deg,#e3f2fd,#bbdefb)}
+.card.position-section{background:linear-gradient(135deg,#f5f5f5,#e0e0e0)}
+.card-title{font-size:14px;font-weight:600;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid;display:flex;align-items:center;gap:6px}
+.route-section .card-title{color:#1565c0;border-color:#90caf9}
+.position-section .card-title{color:#616161;border-color:#bdbdbd}
+.card-title .icon{font-size:16px}
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:13px;font-weight:500;color:#555;margin-bottom:6px}
+.field label .required{color:#e53935;margin-left:2px}
+.field input[type="number"],.field input[type="date"],.field input[type="text"],.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:15px;background:#fafafa;transition:border-color .2s,background .2s;-webkit-appearance:none;appearance:none}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:#1a73e8;background:#fff}
+.field input[readonly]{background:#f0f0f0;color:#888;cursor:not-allowed}
+.field-row{display:flex;gap:10px}
+.field-row .field{flex:1}
+.photo-btns{display:flex;gap:10px;margin-bottom:10px}
+.photo-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:14px 8px;border:2px solid #ddd;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;background:#fafafa;color:#666;user-select:none;position:relative;overflow:hidden;-webkit-appearance:none;appearance:none;font-family:inherit;outline:none}
+.photo-btn input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+.photo-btn.camera{border-color:#90caf9;color:#1565c0;background:#e3f2fd}
+.photo-btn.gallery{border-color:#a5d6a7;color:#2e7d32;background:#e8f5e9}
+.photo-btn:active{transform:scale(0.97)}
+.photo-preview{margin-top:8px;position:relative;display:none}
+.photo-preview img{width:100%;border-radius:8px;max-height:200px;object-fit:cover}
+.photo-preview .remove-photo{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.point-id-box{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:10px 12px;font-size:13px;color:#2e7d32;font-weight:500;text-align:center;margin-top:4px}
+.seq-hint{font-size:11px;color:#999;margin-top:4px}
+.stage-tag{display:inline-block;background:#e3f2fd;color:#1565c0;font-size:10px;padding:1px 6px;border-radius:4px;margin-left:6px;font-weight:400}
+.stage-btns{display:flex;gap:8px;margin-bottom:14px}
+.stage-btn{flex:1;padding:12px 8px;border:2px solid #ddd;border-radius:10px;text-align:center;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;background:#fff;color:#666;user-select:none}
+.stage-btn.active{border-color:#1a73e8;background:#e3f2fd;color:#1565c0}
+.stage-btn.filled{border-color:#4caf50;background:#e8f5e9;color:#2e7d32}
+.stage-btn.active.filled{border-color:#1a73e8;background:#e3f2fd;color:#1565c0;box-shadow:0 0 0 2px #4caf50}
+.submit-btn{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#1a73e8,#1565c0);color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:transform .1s,box-shadow .2s;box-shadow:0 4px 12px rgba(26,115,232,.4);margin:10px auto;display:block;line-height:1.2}
+.submit-btn:active{transform:scale(.98)}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #eee;padding:10px 16px;display:flex;gap:10px;max-width:480px;margin:0 auto;z-index:100}
+.bottom-bar button{flex:1;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer}
+.btn-export{background:#f5f5f5;color:#333}
+.btn-clear{background:#fff3e0;color:#e65100}
+.btn-view{background:#e8f5e9;color:#2e7d32}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.toast.success{background:#2e7d32}
+.toast.error{background:#c62828}
+.record-item{background:#f8f9fa;border-radius:8px;padding:10px 12px;margin-bottom:6px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
+.record-item .record-id{font-weight:600;color:#1a73e8}
+.record-item .record-time{color:#999}
+.record-list-scroll{max-height:200px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.load-more-btn{width:100%;padding:10px;background:#f0f0f0;border:none;border-radius:8px;color:#666;font-size:13px;cursor:pointer;margin-top:8px}
+.load-more-btn:active{background:#e0e0e0}
+.empty-tip{text-align:center;color:#bbb;font-size:13px;padding:20px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:12px;padding:20px;width:90%;max-width:440px;max-height:80vh;overflow-y:auto}
+.modal h3{font-size:16px;margin-bottom:12px}
+.modal .close-btn{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:#999}
+.seq-progress{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.seq-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;border:2px solid #ddd;color:#bbb;background:#fff;transition:all .2s}
+.seq-dot.filled{background:#e8f5e9;border-color:#4caf50;color:#2e7d32}
+.seq-dot.current{background:#1a73e8;border-color:#1a73e8;color:#fff;width:36px;height:36px;font-size:14px;box-shadow:0 2px 8px rgba(26,115,232,.4)}
+.seq-dot.locked{background:#f5f5f5;border-color:#eee;color:#ccc}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>高速公路危害点照片采集</h1>
+  <p>施工前 / 施工中 / 施工后 照片记录</p>
+  <p id="storageInfo" style="font-size:12px;margin-top:6px;padding:4px 8px;background:rgba(255,255,255,0.2);border-radius:4px;display:inline-block"></p>
+</div>
+
+<div class="container">
+  <!-- ========== 模块1：路线管理 ========== -->
+  <div class="card route-section">
+    <div class="card-title"><span class="icon"></span> 路线管理</div>
+    <div class="field-row">
+      <div class="field">
+        <label>施工日期</label>
+        <input type="date" id="workDate">
+      </div>
+      <div class="field">
+        <label>选择路线</label>
+        <select id="routeSelect" onchange="onRouteChange()">
+          <option value="">-- 请选择路线 --</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row" style="margin-top:10px">
+      <button onclick="showNewRouteDialog()" style="flex:1;padding:10px;border:none;border-radius:8px;background:#1a73e8;color:#fff;font-size:14px;cursor:pointer;font-weight:500">新建线路</button>
+      <button onclick="deleteCurrentRoute()" style="flex:1;padding:10px;border:none;border-radius:8px;background:#ffebee;color:#e53935;font-size:14px;cursor:pointer;font-weight:500">删除线路并清空</button>
+    </div>
+    <div class="seq-hint" id="routeHint">请选择或新建路线</div>
+  </div>
+
+  <!-- 施工路段范围 -->
+  <div class="card route-section">
+    <div class="card-title"><span class="icon"></span> 施工路段范围</div>
+    <div class="field-row">
+      <div class="field">
+        <label>起始公里桩</label>
+        <input type="number" id="kmStart" min="0" max="9999" value="" placeholder="不填=不限">
+      </div>
+      <div class="field">
+        <label>终止公里桩</label>
+        <input type="number" id="kmEnd" min="0" max="9999" value="" placeholder="不填=不限">
+      </div>
+    </div>
+    <div class="seq-hint" id="rangeHint">未设置范围，公里桩可任意填写</div>
+  </div>
+
+  <!-- ========== 模块2：数据采集（绑定当前路线） ========== -->
+  <!-- 位置信息 -->
+  <div class="card position-section">
+    <div class="card-title"><span class="icon"></span> 位置信息</div>
+    <div class="field-row">
+      <div class="field">
+        <label>公里桩 <span class="required">*</span></label>
+        <input type="number" id="km" min="0" max="9999" value="0">
+      </div>
+      <div class="field">
+        <label>百米数 <span class="required">*</span></label>
+        <input type="number" id="hm" min="0" max="9" value="0">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>上下行</label>
+        <select id="direction">
+          <option value="上行">上行</option>
+          <option value="下行">下行</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>车道</label>
+        <select id="lane">
+          <option value="超车道">超车道</option>
+          <option value="行车道" selected>行车道</option>
+          <option value="应急车道">应急车道</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>序号 <span class="required">*</span> <span class="stage-tag" id="seqTag">自动</span></label>
+        <input type="number" id="seq" min="1" max="99" value="1" readonly>
+        <div class="seq-hint" id="seqHint">序号根据同位置已有记录自动生成，按顺序填写</div>
+      </div>
+      <div class="field">
+        <label>裂缝方向</label>
+        <select id="crackDir">
+          <option value="横缝" selected>横缝</option>
+          <option value="纵缝">纵缝</option>
+        </select>
+      </div>
+    </div>
+    <div class="point-id-box" id="pointIdDisplay">点位编号：K0+000 上行 行车道 #1 横缝</div>
+    <div class="seq-progress" id="seqProgress"></div>
+  </div>
+
+  <!-- 照片上传（三阶段标签切换） -->
+  <div class="card photo-section" id="photoCard">
+    <div class="card-title"><span class="icon"></span> 照片上传</div>
+    <div class="stage-btns">
+      <div class="stage-btn active filled" id="stageBtnPre" onclick="switchStage('Pre')">施工前</div>
+      <div class="stage-btn" id="stageBtnMid" onclick="switchStage('Mid')">施工中</div>
+      <div class="stage-btn" id="stageBtnPost" onclick="switchStage('Post')">施工后</div>
+    </div>
+    <div style="text-align:right;margin-bottom:10px">
+      <button onclick="confirmResetPhotos()" style="background:none;border:1px solid #ddd;border-radius:6px;padding:4px 12px;font-size:12px;color:#999;cursor:pointer">清除所有照片</button>
+    </div>
+    <div class="photo-btns" id="photoBtns">
+      <button type="button" class="photo-btn camera" onclick="openCamera()">
+        <span>📷 拍照</span>
+      </button>
+      <label class="photo-btn gallery">
+        <span>🖼️ 从相册选择</span>
+        <input type="file" accept="image/*" onchange="handlePhoto(this)">
+      </label>
+    </div>
+    <div class="photo-preview" id="photoPreview">
+      <img id="photoImg" src="" alt="照片">
+      <button class="remove-photo" onclick="removePhoto()">&times;</button>
+    </div>
+  </div>
+
+  <!-- 米数和备注 -->
+  <div class="card photo-section">
+    <div class="card-title"><span class="icon"></span> 详细信息</div>
+    <div class="field">
+      <label>米数 <span class="required">*</span></label>
+      <input type="number" id="meters" min="0" max="99.9" step="0.1" value="0.0">
+    </div>
+    <div class="field" style="margin-top:12px">
+      <label>备注</label>
+      <input type="text" id="notes" placeholder="选填，特殊说明">
+    </div>
+  </div>
+
+  <!-- 提交按钮 -->
+  <button class="submit-btn" id="submitBtn" onclick="submitForm()">提交记录</button>
+  <button class="submit-btn" id="saveEditBtn" onclick="saveEdit()" style="display:none;background:linear-gradient(135deg,#43a047,#2e7d32)">保存修改</button>
+
+  <!-- ========== 模块3：记录显示（按当前路线筛选） ========== -->
+  <div class="card" style="margin-top:12px">
+    <div class="card-title"><span class="icon"></span> 已提交记录 (<span id="recordCount">0</span>)</div>
+    <div id="recordList" class="record-list-scroll">
+      <div class="empty-tip">暂无记录</div>
+    </div>
+  </div>
+</div>
+
+<!-- 底部操作栏 -->
+<div class="bottom-bar">
+  <button class="btn-export" onclick="exportExcel('current')">导出线路</button>
+  <button class="btn-export" onclick="exportExcel('all')">导出全部</button>
+  <button class="btn-view" onclick="viewRecords()">查看记录</button>
+  <button class="btn-clear" onclick="clearAll()">清空记录</button>
+</div>
+
+<!-- 查看记录弹窗 -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="close-btn" onclick="document.getElementById('modalOverlay').classList.remove('show')">&times;</button>
+    <h3>全部线路记录</h3>
+    <div id="modalRecordList"></div>
+  </div>
+</div>
+
+<!-- 清除照片确认弹窗 -->
+<div class="modal-overlay" id="confirmModal" onclick="closeConfirmModal(event)">
+  <div class="modal" style="max-width:320px;text-align:center">
+    <h3 style="margin-bottom:16px">确认清除照片？</h3>
+    <p style="color:#666;font-size:14px;margin-bottom:24px;line-height:1.6">将清除当前所有已上传的照片<br>此操作不可恢复</p>
+    <div style="display:flex;gap:12px">
+      <button onclick="document.getElementById('confirmModal').classList.remove('show')" style="flex:1;padding:12px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:14px;cursor:pointer">取消</button>
+      <button onclick="doResetPhotos()" style="flex:1;padding:12px;border:none;border-radius:8px;background:#e53935;color:#fff;font-size:14px;cursor:pointer">确认清除</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast提示 -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ========== 常量定义 ==========
+const DB_NAME = 'highway_hazard_db';
+const DB_VERSION = 1;
+const STORE_NAME = 'records';
+const LAST_FILL_KEY = 'highway_hazard_last_fill';
+const STAGE_LABEL = { 'Pre': '施工前', 'Mid': '施工中', 'Post': '施工后' };
+const STAGE_NAMES = ['Pre', 'Mid', 'Post'];
+const ROUTES_KEY = 'highway_routes';
+
+// ========== 全局状态 ==========
+let db = null;
+let photoData = { 'Pre': null, 'Mid': null, 'Post': null };
+let currentStage = 'Pre';
+let editingIdx = -1;
+let currentRouteFilter = '';
+let displayCount = 10;
+
+// ========== IndexedDB 操作 ==========
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => { db = request.result; resolve(db); };
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+      }
+    };
+  });
+}
+
+function getRecords() {
+  return new Promise((resolve) => {
+    if (!db) { resolve([]); return; }
+    const transaction = db.transaction([STORE_NAME], 'readonly');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => resolve([]);
+  });
+}
+
+function saveRecord(record) {
+  return new Promise((resolve, reject) => {
+    if (!db) { reject(new Error('DB not initialized')); return; }
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.add(record);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function updateRecord(record) {
+  return new Promise((resolve, reject) => {
+    if (!db) { reject(new Error('DB not initialized')); return; }
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.put(record);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function deleteRecord(id) {
+  return new Promise((resolve, reject) => {
+    if (!db) { reject(new Error('DB not initialized')); return; }
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.delete(id);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function clearRecords() {
+  return new Promise((resolve, reject) => {
+    if (!db) { reject(new Error('DB not initialized')); return; }
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.clear();
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function getStorageUsage() {
+  return new Promise((resolve) => {
+    if (!db) { resolve({ count: 0, size: 0 }); return; }
+    const transaction = db.transaction([STORE_NAME], 'readonly');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.getAll();
+    request.onsuccess = () => {
+      const records = request.result || [];
+      const size = JSON.stringify(records).length;
+      resolve({ count: records.length, size: size });
+    };
+    request.onerror = () => resolve({ count: 0, size: 0 });
+  });
+}
+
+// ========== 路线管理 ==========
+function getRoutes() {
+  try { return JSON.parse(localStorage.getItem(ROUTES_KEY) || '[]'); }
+  catch(e) { return []; }
+}
+
+function saveRoutes(routes) {
+  localStorage.setItem(ROUTES_KEY, JSON.stringify(routes));
+}
+
+function updateRouteSelect() {
+  const select = document.getElementById('routeSelect');
+  const routes = getRoutes();
+  const currentName = select.value;
+  select.innerHTML = '<option value="">-- 请选择路线 --</option>';
+  routes.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.name;
+    opt.textContent = `${r.name} (${r.count || 0}条)`;
+    if (r.name === currentName) opt.selected = true;
+    select.appendChild(opt);
+  });
+}
+
+async function updateRouteCounts() {
+  const records = await getRecords();
+  const routes = getRoutes();
+  const counts = {};
+  records.forEach(r => {
+    const name = r.routeName || '';
+    if (name) counts[name] = (counts[name] || 0) + 1;
+  });
+  routes.forEach(r => { r.count = counts[r.name] || 0; });
+  saveRoutes(routes);
+  updateRouteSelect();
+}
+
+// ========== 模块2：统一刷新函数 ==========
+// 这是核心函数，确保路线切换时所有状态正确刷新
+async function refreshDataModule(isNewRoute = false) {
+  // 1. 重置编辑状态
+  editingIdx = -1;
+  document.getElementById('submitBtn').style.display = 'block';
+  document.getElementById('saveEditBtn').style.display = 'none';
+
+  // 2. 清空照片
+  photoData = { 'Pre': null, 'Mid': null, 'Post': null };
+  currentStage = 'Pre';
+  updateStageButtons();
+  showCurrentStagePhoto();
+
+  // 3. 处理位置信息
+  if (isNewRoute) {
+    // 新建路线：重置位置信息为默认值
+    document.getElementById('km').value = 0;
+    document.getElementById('hm').value = 0;
+    document.getElementById('direction').value = '上行';
+    document.getElementById('lane').value = '行车道';
+    document.getElementById('crackDir').value = '横缝';
+    document.getElementById('meters').value = 0;
+    document.getElementById('notes').value = '';
+    document.getElementById('seq').value = 1;
+    document.getElementById('seq').readOnly = true;
+  } else {
+    // 选择已有路线：恢复上次填写的值
+    loadLastFill();
+  }
+
+  // 4. 更新序号和进度条
+  await updateSeqFromRecords();
+  
+  // 5. 更新点位编号显示
+  updatePointId();
+
+  // 6. 更新记录列表
+  displayCount = 10;
+  await renderRecordList();
+}
+
+// ========== 路线切换事件 ==========
+function onRouteChange() {
+  const select = document.getElementById('routeSelect');
+  const hint = document.getElementById('routeHint');
+
+  if (select.value === '') {
+    hint.textContent = '请选择路线';
+    currentRouteFilter = '';
+    // 清空数据采集模块
+    refreshDataModule(false);
+  } else {
+    hint.textContent = `已选择路线：${select.value}`;
+    currentRouteFilter = select.value;
+    // 刷新数据采集模块
+    refreshDataModule(false);
+  }
+}
+
+function showNewRouteDialog() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay show';
+  overlay.id = 'newRouteOverlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3>新建线路</h3>
+      <p style="color:#666;font-size:13px;margin-bottom:12px">提示：新建路线后，请注意修改公里桩和百米数</p>
+      <input type="text" id="newRouteInput" placeholder="请输入路线名称，如：G4京港澳高速" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;margin-bottom:12px">
+      <div style="display:flex;gap:10px">
+        <button onclick="document.getElementById('newRouteOverlay').remove()" style="flex:1;padding:10px;border:none;border-radius:6px;background:#f0f0f0;color:#666;font-size:14px;cursor:pointer">取消</button>
+        <button onclick="confirmNewRoute()" style="flex:1;padding:10px;border:none;border-radius:6px;background:#1a73e8;color:#fff;font-size:14px;cursor:pointer;font-weight:500">确定</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(() => document.getElementById('newRouteInput').focus(), 100);
+}
+
+async function confirmNewRoute() {
+  const input = document.getElementById('newRouteInput');
+  const routeName = input.value.trim();
+
+  if (!routeName) {
+    showToast('请输入路线名称', 'error');
+    return;
+  }
+
+  const routes = getRoutes();
+  const exists = routes.find(r => r.name === routeName);
+
+  if (exists) {
+    showToast(`路线"${routeName}"已存在`, 'error');
+    return;
+  }
+
+  // 关闭对话框
+  const overlay = document.getElementById('newRouteOverlay');
+  if (overlay) overlay.remove();
+
+  // 保存新路线
+  routes.push({ name: routeName, count: 0, createdAt: new Date().toISOString() });
+  saveRoutes(routes);
+  updateRouteSelect();
+
+  // 选择新路线
+  document.getElementById('routeSelect').value = routeName;
+  currentRouteFilter = routeName;
+  document.getElementById('routeHint').textContent = `新路线"${routeName}"已创建，请修改公里桩和百米数`;
+
+  // 刷新数据采集模块（新建路线模式）
+  await refreshDataModule(true);
+
+  showToast(`新路线"${routeName}"已创建，请注意修改公里桩和百米数`, 'success');
+}
+
+async function deleteCurrentRoute() {
+  const select = document.getElementById('routeSelect');
+  const name = select.value;
+
+  if (!name) {
+    showToast('请先选择要删除的路线', 'error');
+    return;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay show';
+  overlay.id = 'deleteRouteOverlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3 style="color:#e53935">删除线路</h3>
+      <p style="color:#666;font-size:13px;margin-bottom:8px">确定要删除路线"<strong>${name}</strong>"吗？</p>
+      <p style="color:#e53935;font-size:13px;margin-bottom:12px"><strong>警告：</strong>建议先导出数据备份，删除后该路线的所有记录将无法恢复！</p>
+      <p style="color:#666;font-size:13px;margin-bottom:12px">确认删除请输入：<strong>删除</strong></p>
+      <input type="text" id="deleteConfirmInput" placeholder="请输入"删除"确认" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;margin-bottom:12px">
+      <div style="display:flex;gap:10px">
+        <button onclick="document.getElementById('deleteRouteOverlay').remove()" style="flex:1;padding:10px;border:none;border-radius:6px;background:#f0f0f0;color:#666;font-size:14px;cursor:pointer">取消</button>
+        <button onclick="confirmDeleteRoute('${name}')" style="flex:1;padding:10px;border:none;border-radius:6px;background:#e53935;color:#fff;font-size:14px;cursor:pointer;font-weight:500">确认删除</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(() => document.getElementById('deleteConfirmInput').focus(), 100);
+}
+
+async function confirmDeleteRoute(name) {
+  const input = document.getElementById('deleteConfirmInput');
+  if (input.value !== '删除') {
+    showToast('输入不正确，已取消删除', 'error');
+    return;
+  }
+
+  const overlay = document.getElementById('deleteRouteOverlay');
+  if (overlay) overlay.remove();
+
+  // 删除路线
+  const routes = getRoutes();
+  const filtered = routes.filter(r => r.name !== name);
+  saveRoutes(filtered);
+
+  // 删除该路线的所有记录
+  const records = await getRecords();
+  for (const r of records) {
+    if (r.routeName === name) {
+      await deleteRecord(r.id);
+    }
+  }
+
+  // 重置选择
+  document.getElementById('routeSelect').value = '';
+  currentRouteFilter = '';
+  document.getElementById('routeHint').textContent = '路线已删除，请选择其他路线';
+
+  updateRouteSelect();
+  await refreshDataModule(false);
+  await updateStorageInfo();
+  showToast(`路线"${name}"已删除`, 'success');
+}
+
+// ========== 位置信息管理 ==========
+function getLocationKey() {
+  const km = document.getElementById('km').value || '0';
+  const hm = document.getElementById('hm').value || '0';
+  const dir = document.getElementById('direction').value;
+  const lane = document.getElementById('lane').value;
+  const crack = document.getElementById('crackDir').value;
+  return `${km}_${hm}_${dir}_${lane}_${crack}`;
+}
+
+function updatePointId() {
+  const km = document.getElementById('km').value || '0';
+  const hm = document.getElementById('hm').value || '0';
+  const dir = document.getElementById('direction').value;
+  const lane = document.getElementById('lane').value;
+  const seq = document.getElementById('seq').value || '1';
+  const crack = document.getElementById('crackDir').value;
+  const meters = document.getElementById('meters').value || '0';
+  const hmStr = String(hm).padStart(3, '0');
+  document.getElementById('pointIdDisplay').textContent =
+    `点位编号：K${km}+${hmStr} ${dir} ${lane} #${seq} ${crack} ${meters}m`;
+}
+
+function getRouteLastFillKey(routeName) {
+  if (!routeName) return LAST_FILL_KEY;
+  return LAST_FILL_KEY + '_' + routeName;
+}
+
+function loadLastFill() {
+  const routeName = document.getElementById('routeSelect').value;
+  const key = getRouteLastFillKey(routeName);
+  const last = localStorage.getItem(key);
+  if (!last) return;
+  try {
+    const data = JSON.parse(last);
+    ['km','hm','direction','lane','crackDir'].forEach(id => {
+      if (data[id] !== undefined) document.getElementById(id).value = data[id];
+    });
+    if (data.meters !== undefined) document.getElementById('meters').value = data.meters;
+    if (data.notes !== undefined) document.getElementById('notes').value = data.notes;
+  } catch(e) {}
+}
+
+function saveLastFill() {
+  const routeName = document.getElementById('routeSelect').value;
+  const key = getRouteLastFillKey(routeName);
+  const data = {
+    km: document.getElementById('km').value,
+    hm: document.getElementById('hm').value,
+    direction: document.getElementById('direction').value,
+    lane: document.getElementById('lane').value,
+    crackDir: document.getElementById('crackDir').value,
+    meters: document.getElementById('meters').value,
+    notes: document.getElementById('notes').value
+  };
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+// ========== 序号管理 ==========
+async function updateSeqFromRecords() {
+  const records = await getRecords();
+  const locKey = getLocationKey();
+  const seqEl = document.getElementById('seq');
+  const hintEl = document.getElementById('seqHint');
+  const tagEl = document.getElementById('seqTag');
+
+  // 按当前路线和位置筛选
+  const sameLocRecords = records.filter(r => {
+    const rKey = `${r.km}_${r.hm}_${r.direction}_${r.lane}_${r.crackDir}`;
+    const routeMatch = !currentRouteFilter || r.routeName === currentRouteFilter;
+    return rKey === locKey && routeMatch;
+  });
+
+  if (sameLocRecords.length === 0) {
+    if (editingIdx < 0) {
+      seqEl.value = 1;
+      seqEl.readOnly = true;
+    }
+    tagEl.textContent = '自动';
+    tagEl.style.background = '#e3f2fd';
+    tagEl.style.color = '#1565c0';
+    hintEl.textContent = '该位置首次填写，序号从1开始';
+    renderSeqProgress(0, editingIdx >= 0 ? parseInt(seqEl.value) : 1);
+    return;
+  }
+
+  const filledSeqs = new Set(sameLocRecords.map(r => r.seq));
+  const maxSeq = Math.max(...filledSeqs);
+
+  if (editingIdx >= 0) {
+    const currentSeq = parseInt(seqEl.value);
+    hintEl.textContent = `正在修改序号 #${currentSeq}`;
+    tagEl.textContent = '修改';
+    tagEl.style.background = '#e3f2fd';
+    tagEl.style.color = '#1565c0';
+    renderSeqProgress(maxSeq, currentSeq, filledSeqs);
+    return;
+  }
+
+  let nextSeq = 1;
+  while (filledSeqs.has(nextSeq)) { nextSeq++; }
+  if (nextSeq > maxSeq) { nextSeq = maxSeq + 1; }
+
+  seqEl.value = nextSeq;
+  seqEl.readOnly = true;
+
+  if (nextSeq <= maxSeq) {
+    hintEl.textContent = `序号#${nextSeq}尚未填写，请先完成该序号`;
+    tagEl.textContent = '待补';
+    tagEl.style.background = '#fff3e0';
+    tagEl.style.color = '#e65100';
+  } else {
+    hintEl.textContent = `同位置已有${maxSeq}道裂缝，当前为第${nextSeq}道`;
+    tagEl.textContent = '新增';
+    tagEl.style.background = '#e8f5e9';
+    tagEl.style.color = '#2e7d32';
+  }
+
+  renderSeqProgress(maxSeq, nextSeq, filledSeqs);
+}
+
+function renderSeqProgress(maxSeq, currentSeq, filledSeqs) {
+  const el = document.getElementById('seqProgress');
+  if (maxSeq === 0) { el.innerHTML = ''; return; }
+  const km = document.getElementById('km').value || '0';
+  const hm = document.getElementById('hm').value || '0';
+  const dir = document.getElementById('direction').value;
+  const lane = document.getElementById('lane').value;
+  const crack = document.getElementById('crackDir').value;
+  let html = '';
+  for (let i = 1; i <= Math.max(maxSeq, currentSeq); i++) {
+    let cls = 'seq-dot';
+    if (i === currentSeq) cls += ' current';
+    else if (filledSeqs && filledSeqs.has(i)) cls += ' filled';
+    else cls += ' locked';
+    html += `<div class="${cls}" style="cursor:pointer" onclick="jumpToSeq(${i},'${km}','${hm}','${dir}','${lane}','${crack}')">${i}</div>`;
+  }
+  el.innerHTML = html;
+}
+
+async function jumpToSeq(seq, km, hm, dir, lane, crack) {
+  const records = await getRecords();
+  const routeName = document.getElementById('routeSelect').value;
+  const idx = records.findIndex(r =>
+    r.routeName === routeName &&
+    r.km === parseInt(km) && r.hm === parseInt(hm) &&
+    r.direction === dir && r.lane === lane &&
+    r.seq === seq && r.crackDir === crack
+  );
+  if (idx >= 0) {
+    await editRecord(idx);
+  } else {
+    showToast(`序号#${seq}暂无记录`, 'error');
+  }
+}
+
+// ========== 照片管理 ==========
+function switchStage(stage) {
+  currentStage = stage;
+  updateStageButtons();
+  showCurrentStagePhoto();
+}
+
+function updateStageButtons() {
+  STAGE_NAMES.forEach(s => {
+    const btn = document.getElementById('stageBtn' + s);
+    btn.className = 'stage-btn';
+    if (s === currentStage) btn.classList.add('active');
+    if (photoData[s]) btn.classList.add('filled');
+  });
+}
+
+function showCurrentStagePhoto() {
+  if (photoData[currentStage]) {
+    document.getElementById('photoImg').src = photoData[currentStage];
+    document.getElementById('photoPreview').style.display = 'block';
+    document.getElementById('photoBtns').style.display = 'none';
+  } else {
+    document.querySelectorAll('#photoBtns input[type="file"]').forEach(i => i.value = '');
+    document.getElementById('photoPreview').style.display = 'none';
+    document.getElementById('photoBtns').style.display = 'flex';
+  }
+}
+
+function openCamera() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.setAttribute('capture', 'environment');
+  input.style.position = 'fixed';
+  input.style.bottom = '0';
+  input.style.left = '0';
+  input.style.opacity = '0.01';
+  input.onchange = function() {
+    handlePhoto(this);
+    setTimeout(function() { document.body.removeChild(input); }, 1000);
+  };
+  document.body.appendChild(input);
+  input.click();
+}
+
+function handlePhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) {
+    showToast('照片过大，请选择10MB以内的图片', 'error');
+    input.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    compressImage(e.target.result, 600, 0.5, (compressed) => {
+      photoData[currentStage] = compressed;
+      updateStageButtons();
+      document.getElementById('photoImg').src = compressed;
+      document.getElementById('photoPreview').style.display = 'block';
+      document.getElementById('photoBtns').style.display = 'none';
+      const sizeKB = Math.round(compressed.length * 0.75 / 1024);
+      showToast(`照片已压缩（约${sizeKB}KB）`, 'success');
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+function compressImage(dataUrl, maxDim, quality, callback) {
+  const img = new Image();
+  img.onload = function() {
+    let w = img.width, h = img.height;
+    if (w > maxDim || h > maxDim) {
+      if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+      else { w = Math.round(w * maxDim / h); h = maxDim; }
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    callback(canvas.toDataURL('image/jpeg', quality));
+  };
+  img.src = dataUrl;
+}
+
+function removePhoto() {
+  photoData[currentStage] = null;
+  updateStageButtons();
+  document.querySelectorAll('#photoBtns input[type="file"]').forEach(i => i.value = '');
+  document.getElementById('photoPreview').style.display = 'none';
+  document.getElementById('photoBtns').style.display = 'flex';
+}
+
+function confirmResetPhotos() {
+  const hasPhotos = photoData['Pre'] || photoData['Mid'] || photoData['Post'];
+  if (!hasPhotos) {
+    showToast('当前没有照片需要清除', '');
+    return;
+  }
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+function doResetPhotos() {
+  photoData = { 'Pre': null, 'Mid': null, 'Post': null };
+  currentStage = 'Pre';
+  updateStageButtons();
+  showCurrentStagePhoto();
+  document.getElementById('confirmModal').classList.remove('show');
+  showToast('已清除所有照片', 'success');
+}
+
+// ========== 表单提交 ==========
+async function submitForm() {
+  const km = document.getElementById('km').value;
+  const hm = document.getElementById('hm').value;
+  const meters = document.getElementById('meters').value;
+
+  if (!km || km === '') { showToast('请填写公里桩', 'error'); return; }
+  if (hm === '' || hm === undefined) { showToast('请填写百米数', 'error'); return; }
+  if (!validateKmRange()) { showToast('公里桩超出施工路段范围', 'error'); return; }
+  if (meters === '' || meters === undefined) { showToast('请填写米数', 'error'); return; }
+
+  const direction = document.getElementById('direction').value;
+  const lane = document.getElementById('lane').value;
+  const seq = parseInt(document.getElementById('seq').value);
+  const crackDir = document.getElementById('crackDir').value;
+  const notes = document.getElementById('notes').value;
+
+  const now = new Date();
+  const timeStr = now.getFullYear() + '-' +
+    String(now.getMonth()+1).padStart(2,'0') + '-' +
+    String(now.getDate()).padStart(2,'0') + ' ' +
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0');
+
+  const records = await getRecords();
+  const routeName = document.getElementById('routeSelect').value;
+  const workDate = document.getElementById('workDate').value || '';
+
+  if (!routeName) {
+    showToast('请先选择路线', 'error');
+    return;
+  }
+
+  // 按当前路线和位置查找已有记录
+  const existingIdx = records.findIndex(r =>
+    r.routeName === routeName &&
+    r.km === parseInt(km) && r.hm === parseInt(hm) &&
+    r.direction === direction && r.lane === lane &&
+    r.seq === seq && r.crackDir === crackDir
+  );
+
+  const recordData = {
+    routeName,
+    workDate,
+    km: parseInt(km),
+    hm: parseInt(hm),
+    direction,
+    lane,
+    seq,
+    crackDir,
+    meters: parseFloat(meters) || 0,
+    notes: notes || '',
+    photoPre: photoData['Pre'],
+    photoMid: photoData['Mid'],
+    photoPost: photoData['Post'],
+    submitTime: timeStr
+  };
+
+  if (existingIdx >= 0) {
+    const existing = records[existingIdx];
+    if (photoData['Pre']) existing.photoPre = photoData['Pre'];
+    if (photoData['Mid']) existing.photoMid = photoData['Mid'];
+    if (photoData['Post']) existing.photoPost = photoData['Post'];
+    existing.meters = parseFloat(meters) || 0;
+    existing.notes = notes || '';
+    existing.routeName = routeName;
+    existing.workDate = workDate;
+    existing.submitTime = timeStr;
+    await updateRecord(existing);
+    showToast(`已补充照片到序号#${seq}`, 'success');
+  } else {
+    await saveRecord(recordData);
+    showToast('提交成功！', 'success');
+  }
+
+  localStorage.setItem('lastRoute', routeName);
+  await updateRouteCounts();
+  saveLastFill();
+
+  // 刷新数据采集模块
+  await refreshDataModule(false);
+  await updateStorageInfo();
+}
+
+// ========== 记录显示 ==========
+async function renderRecordList() {
+  const allRecords = await getRecords();
+  let records = allRecords;
+
+  if (currentRouteFilter) {
+    records = records.filter(r => r.routeName === currentRouteFilter);
+  }
+
+  document.getElementById('recordCount').textContent = records.length;
+  const list = document.getElementById('recordList');
+  if (records.length === 0) {
+    list.innerHTML = `<div class="empty-tip">${currentRouteFilter ? `路线"${currentRouteFilter}"暂无记录` : '暂无记录'}</div>`;
+    return;
+  }
+  const count = Math.min(displayCount, records.length);
+  const recent = records.slice(-count).reverse();
+  let html = recent.map((r, i) => {
+    const realIdx = allRecords.findIndex(ar => ar.id === r.id);
+    const hmStr = String(r.hm).padStart(3, '0');
+    const stages = [];
+    if (r.photoPre) stages.push('前✓'); else stages.push('前✗');
+    if (r.photoMid) stages.push('中✓'); else stages.push('中✗');
+    if (r.photoPost) stages.push('后✓'); else stages.push('后✗');
+    const hasMissing = !r.photoPre || !r.photoMid || !r.photoPost;
+    const metersStr = r.meters !== undefined ? ` ${r.meters}m` : '';
+    const notesStr = r.notes ? ` 📝` : '';
+    return `<div class="record-item" style="cursor:pointer;${hasMissing ? 'border-left:3px solid #ff9800' : ''}" onclick="editRecord(${realIdx})">
+      <span class="record-id">K${r.km}+${hmStr} #${r.seq} ${r.crackDir}${metersStr}${notesStr} [${stages.join(' ')}]</span>
+      <span class="record-time">${r.submitTime}${hasMissing ? ' ⚠️' : ''}</span>
+    </div>`;
+  }).join('');
+  if (records.length > displayCount) {
+    html += `<button class="load-more-btn" onclick="loadMoreRecords()">加载更多 (还有 ${records.length - displayCount} 条)</button>`;
+  }
+  list.innerHTML = html;
+}
+
+async function loadMoreRecords() {
+  displayCount += 10;
+  await renderRecordList();
+}
+
+async function viewRecords() {
+  // 查看全部线路的记录（不按当前路线筛选）
+  const records = await getRecords();
+  
+  const modal = document.getElementById('modalOverlay');
+  const list = document.getElementById('modalRecordList');
+  if (records.length === 0) {
+    list.innerHTML = '<div class="empty-tip">暂无记录</div>';
+  } else {
+    list.innerHTML = records.slice().reverse().map((r) => {
+      const realIdx = records.findIndex(ar => ar.id === r.id);
+      const hmStr = String(r.hm).padStart(3, '0');
+      const stages = [];
+      if (r.photoPre) stages.push('前✓'); else stages.push('前✗');
+      if (r.photoMid) stages.push('中✓'); else stages.push('中✗');
+      if (r.photoPost) stages.push('后✓'); else stages.push('后✗');
+      const hasMissing = !r.photoPre || !r.photoMid || !r.photoPost;
+      const metersStr = r.meters !== undefined ? `${r.meters}m` : '';
+      const notesStr = r.notes ? `备注：${r.notes}` : '';
+      const routeName = r.routeName || '未知路线';
+      return `<div class="record-item" style="flex-direction:column;align-items:flex-start;gap:4px;cursor:pointer;${hasMissing ? 'border-left:3px solid #ff9800' : ''}" onclick="editRecord(${realIdx});document.getElementById('modalOverlay').classList.remove('show')">
+        <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
+          <span style="background:#e3f2fd;color:#1565c0;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:500">${routeName}</span>
+          ${hasMissing ? '<span style="color:#ff9800;font-size:11px">缺照片</span>' : ''}
+        </div>
+        <div><span class="record-id">K${r.km}+${hmStr} #${r.seq} ${r.crackDir}${metersStr ? ' ' + metersStr : ''}</span></div>
+        <div style="color:#999;font-size:11px">照片：${stages.join(' ')} | 提交：${r.submitTime}</div>
+        ${notesStr ? `<div style="color:#666;font-size:11px">${notesStr}</div>` : ''}
+        <div style="color:#1a73e8;font-size:11px">点击编辑</div>
+      </div>`;
+    }).join('');
+  }
+  modal.classList.add('show');
+}
+
+async function editRecord(idx) {
+  const records = await getRecords();
+  if (idx < 0 || idx >= records.length) return;
+  const r = records[idx];
+  editingIdx = idx;
+
+  document.getElementById('km').value = r.km;
+  document.getElementById('hm').value = r.hm;
+  document.getElementById('direction').value = r.direction;
+  document.getElementById('lane').value = r.lane;
+  document.getElementById('seq').value = r.seq;
+  document.getElementById('seq').readOnly = true;
+  document.getElementById('crackDir').value = r.crackDir;
+  document.getElementById('meters').value = r.meters !== undefined ? r.meters : 0;
+  document.getElementById('notes').value = r.notes || '';
+
+  photoData = {
+    'Pre': r.photoPre || null,
+    'Mid': r.photoMid || null,
+    'Post': r.photoPost || null
+  };
+
+  if (!photoData['Pre']) currentStage = 'Pre';
+  else if (!photoData['Mid']) currentStage = 'Mid';
+  else if (!photoData['Post']) currentStage = 'Post';
+  else currentStage = 'Pre';
+
+  updatePointId();
+  updateStageButtons();
+  showCurrentStagePhoto();
+  await updateSeqFromRecords();
+
+  document.getElementById('submitBtn').style.display = 'none';
+  document.getElementById('saveEditBtn').style.display = 'block';
+
+  showToast('已进入修改模式，可补充照片', 'success');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function saveEdit() {
+  if (editingIdx < 0) return;
+  const records = await getRecords();
+  const r = records[editingIdx];
+
+  if (photoData['Pre']) r.photoPre = photoData['Pre'];
+  if (photoData['Mid']) r.photoMid = photoData['Mid'];
+  if (photoData['Post']) r.photoPost = photoData['Post'];
+
+  r.meters = parseFloat(document.getElementById('meters').value) || 0;
+  r.notes = document.getElementById('notes').value || '';
+
+  const now = new Date();
+  r.submitTime = now.getFullYear() + '-' +
+    String(now.getMonth()+1).padStart(2,'0') + '-' +
+    String(now.getDate()).padStart(2,'0') + ' ' +
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0');
+
+  await updateRecord(r);
+
+  editingIdx = -1;
+  document.getElementById('submitBtn').style.display = 'block';
+  document.getElementById('saveEditBtn').style.display = 'none';
+
+  await refreshDataModule(false);
+  await updateStorageInfo();
+  showToast('修改已保存！', 'success');
+}
+
+// ========== 导出功能 ==========
+async function exportExcel(mode) {
+  let records = await getRecords();
+
+  if (mode === 'current' && currentRouteFilter) {
+    records = records.filter(r => r.routeName === currentRouteFilter);
+  }
+
+  if (records.length === 0) { showToast('没有数据可导出', 'error'); return; }
+
+  const headers = ['自动编号','施工日期','路线名称','点位编号','公里桩','百米数','上下行','车道','序号','裂缝方向','米数','备注','照片阶段','提交时间'];
+  const rows = [];
+  let autoNum = 1;
+  records.forEach(r => {
+    const hmStr = String(r.hm).padStart(3, '0');
+    const pointId = `K${r.km}+${hmStr}_${r.direction}_${r.lane}_#${r.seq}_${r.crackDir}`;
+    const rName = r.routeName || '';
+    const wDate = r.workDate || '';
+    const base = [pointId, r.km, r.hm, r.direction, r.lane, r.seq, r.crackDir,
+      r.meters !== undefined ? r.meters : 0, r.notes || ''];
+    if (r.photoPre) {
+      const numStr = String(autoNum).padStart(5, '0');
+      rows.push([numStr, wDate, rName, ...base, '施工前', r.submitTime]);
+      autoNum++;
+    }
+    if (r.photoMid) {
+      const numStr = String(autoNum).padStart(5, '0');
+      rows.push([numStr, wDate, rName, ...base, '施工中', r.submitTime]);
+      autoNum++;
+    }
+    if (r.photoPost) {
+      const numStr = String(autoNum).padStart(5, '0');
+      rows.push([numStr, wDate, rName, ...base, '施工后', r.submitTime]);
+      autoNum++;
+    }
+  });
+
+  let csv = '\uFEFF' + headers.join(',') + '\n';
+  rows.forEach(row => {
+    csv += row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',') + '\n';
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const routeSuffix = mode === 'current' && currentRouteFilter ? `_${currentRouteFilter}` : '_全部';
+  a.download = `危害点采集记录${routeSuffix}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  exportPhotos(records, routeSuffix);
+  showToast(`已导出 ${rows.length} 行数据（${records.length} 条记录）`, 'success');
+}
+
+async function exportPhotos(records, routeSuffix) {
+  if (typeof JSZip === 'undefined') {
+    showToast('ZIP库加载失败，请检查网络', 'error');
+    return;
+  }
+  const zip = new JSZip();
+  let autoNum = 1;
+  let photoCount = 0;
+
+  records.forEach(r => {
+    ['Pre','Mid','Post'].forEach(suffix => {
+      const data = r['photo' + suffix];
+      if (data) {
+        const numStr = String(autoNum).padStart(5, '0');
+        const hmStr = String(r.hm).padStart(3, '0');
+        const metersStr = r.meters !== undefined ? r.meters + 'm' : '0m';
+        const filename = `${numStr}_K${r.km}_${hmStr}_${r.crackDir}_${r.seq}_${STAGE_LABEL[suffix]}_${metersStr}.jpg`;
+        const base64 = data.split(',')[1];
+        zip.file(filename, base64, {base64: true});
+        autoNum++;
+        photoCount++;
+      }
+    });
+  });
+
+  if (photoCount === 0) {
+    showToast('没有照片可导出', 'error');
+    return;
+  }
+
+  showToast(`正在打包 ${photoCount} 张照片...`, 'success');
+  const blob = await zip.generateAsync({type: 'blob'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const rs = routeSuffix || '';
+  a.download = `危害点照片${rs}_${new Date().toISOString().slice(0,10)}.zip`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ========== 清空功能 ==========
+function clearAll() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay show';
+  overlay.id = 'clearAllOverlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3 style="color:#e53935">清空所有数据</h3>
+      <p style="color:#666;font-size:13px;margin-bottom:8px">确定要清空<strong>所有路线</strong>的<strong>所有记录</strong>吗？</p>
+      <p style="color:#e53935;font-size:13px;margin-bottom:12px"><strong>警告：</strong>此操作不可恢复！建议先导出数据备份。</p>
+      <p style="color:#666;font-size:13px;margin-bottom:12px">确认清空请输入：<strong>清空</strong></p>
+      <input type="text" id="clearAllConfirmInput" placeholder="请输入"清空"确认" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;margin-bottom:12px">
+      <div style="display:flex;gap:10px">
+        <button onclick="document.getElementById('clearAllOverlay').remove()" style="flex:1;padding:10px;border:none;border-radius:6px;background:#f0f0f0;color:#666;font-size:14px;cursor:pointer">取消</button>
+        <button onclick="confirmClearAll()" style="flex:1;padding:10px;border:none;border-radius:6px;background:#e53935;color:#fff;font-size:14px;cursor:pointer;font-weight:500">确认清空</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(() => document.getElementById('clearAllConfirmInput').focus(), 100);
+}
+
+async function confirmClearAll() {
+  const input = document.getElementById('clearAllConfirmInput');
+  if (input.value !== '清空') {
+    showToast('输入不正确，已取消清空', 'error');
+    return;
+  }
+
+  const overlay = document.getElementById('clearAllOverlay');
+  if (overlay) overlay.remove();
+
+  await clearRecords();
+  localStorage.removeItem(ROUTES_KEY);
+  localStorage.removeItem('lastRoute');
+
+  document.getElementById('routeSelect').value = '';
+  currentRouteFilter = '';
+  document.getElementById('routeHint').textContent = '请选择或新建路线';
+
+  updateRouteSelect();
+  await refreshDataModule(false);
+  await updateStorageInfo();
+  showToast('已清空所有数据', 'success');
+}
+
+// ========== 辅助功能 ==========
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || '');
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+async function updateStorageInfo() {
+  const usage = await getStorageUsage();
+  const sizeMB = (usage.size / 1024 / 1024).toFixed(2);
+  const el = document.getElementById('storageInfo');
+  if (el) {
+    el.textContent = `已存储 ${usage.count} 条记录，占用 ${sizeMB} MB`;
+    if (usage.size > 40 * 1024 * 1024) {
+      el.style.background = 'rgba(229,57,53,0.8)';
+      el.style.color = '#fff';
+      el.textContent += ' 存储空间即将满，建议导出后清空';
+    } else if (usage.size > 20 * 1024 * 1024) {
+      el.style.background = 'rgba(255,152,0,0.8)';
+      el.style.color = '#fff';
+    } else {
+      el.style.background = 'rgba(255,255,255,0.2)';
+      el.style.color = '#fff';
+    }
+  }
+}
+
+function loadRangeSettings() {
+  const range = localStorage.getItem('highway_hazard_range');
+  if (range) {
+    try {
+      const data = JSON.parse(range);
+      if (data.start !== undefined) document.getElementById('kmStart').value = data.start;
+      if (data.end !== undefined) document.getElementById('kmEnd').value = data.end;
+      updateRangeHint();
+    } catch(e) {}
+  }
+}
+
+function saveRangeSettings() {
+  const start = document.getElementById('kmStart').value;
+  const end = document.getElementById('kmEnd').value;
+  localStorage.setItem('highway_hazard_range', JSON.stringify({ start, end }));
+}
+
+function updateRangeHint() {
+  const start = document.getElementById('kmStart').value;
+  const end = document.getElementById('kmEnd').value;
+  const hint = document.getElementById('rangeHint');
+  const kmInput = document.getElementById('km');
+  if (start && end) {
+    if (parseInt(start) > parseInt(end)) {
+      hint.textContent = '起始公里桩不能大于终止公里桩';
+      hint.style.color = '#e53935';
+      kmInput.min = 0;
+      kmInput.max = 9999;
+    } else {
+      hint.textContent = `公里桩范围：K${start} ~ K${end}`;
+      hint.style.color = '#2e7d32';
+      kmInput.min = start;
+      kmInput.max = end;
+    }
+  } else if (start || end) {
+    hint.textContent = '请同时填写起始和终止公里桩';
+    hint.style.color = '#ff9800';
+    kmInput.min = 0;
+    kmInput.max = 9999;
+  } else {
+    hint.textContent = '未设置范围，公里桩可任意填写';
+    hint.style.color = '#999';
+    kmInput.min = 0;
+    kmInput.max = 9999;
+  }
+}
+
+function validateKmRange() {
+  const start = document.getElementById('kmStart').value;
+  const end = document.getElementById('kmEnd').value;
+  const km = document.getElementById('km').value;
+  if (!start || !end || !km) return true;
+  const kmVal = parseInt(km);
+  const startVal = parseInt(start);
+  const endVal = parseInt(end);
+  if (startVal > endVal) return true;
+  return kmVal >= startVal && kmVal <= endVal;
+}
+
+function bindRangeValidation() {
+  ['kmStart', 'kmEnd'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      updateRangeHint();
+      saveRangeSettings();
+      if (!validateKmRange()) {
+        showToast('公里桩超出施工路段范围', 'error');
+      }
+    });
+  });
+}
+
+function bindAutoUpdate() {
+  ['km','hm','direction','lane','crackDir'].forEach(id => {
+    document.getElementById(id).addEventListener('input', async () => {
+      updatePointId();
+      if (id === 'km' && !validateKmRange()) {
+        showToast('公里桩超出施工路段范围', 'error');
+      }
+      if (editingIdx < 0) { await updateSeqFromRecords(); }
+    });
+    document.getElementById(id).addEventListener('change', async () => {
+      updatePointId();
+      if (id === 'km' && !validateKmRange()) {
+        showToast('公里桩超出施工路段范围', 'error');
+      }
+      if (editingIdx < 0) { await updateSeqFromRecords(); }
+    });
+  });
+  document.getElementById('meters').addEventListener('input', () => {
+    updatePointId();
+  });
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modalOverlay')) {
+    document.getElementById('modalOverlay').classList.remove('show');
+  }
+}
+
+function closeConfirmModal(e) {
+  if (e.target === document.getElementById('confirmModal')) {
+    document.getElementById('confirmModal').classList.remove('show');
+  }
+}
+
+async function migrateOldData() {
+  const oldData = localStorage.getItem('highway_hazard_records');
+  if (oldData) {
+    try {
+      const records = JSON.parse(oldData);
+      if (records.length > 0) {
+        for (const record of records) {
+          delete record.id;
+          await saveRecord(record);
+        }
+        localStorage.removeItem('highway_hazard_records');
+        showToast(`已迁移 ${records.length} 条旧数据`, 'success');
+      }
+    } catch (e) {
+      console.error('迁移失败:', e);
+    }
+  }
+}
+
+// ========== 页面初始化 ==========
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await initDB();
+    await migrateOldData();
+  } catch (e) {
+    console.error('IndexedDB初始化失败:', e);
+    showToast('存储初始化失败，请刷新重试', 'error');
+    return;
+  }
+
+  // 初始化施工日期
+  const today = new Date().toISOString().slice(0, 10);
+  const savedDate = localStorage.getItem('workDate') || today;
+  document.getElementById('workDate').value = savedDate;
+  document.getElementById('workDate').addEventListener('change', () => {
+    localStorage.setItem('workDate', document.getElementById('workDate').value);
+  });
+
+  // 初始化路线
+  const savedRoute = localStorage.getItem('lastRoute');
+  updateRouteSelect();
+  if (savedRoute) {
+    document.getElementById('routeSelect').value = savedRoute;
+    currentRouteFilter = savedRoute;
+    document.getElementById('routeHint').textContent = `已选择路线：${savedRoute}`;
+  }
+  await updateRouteCounts();
+
+  // 初始化施工路段范围
+  loadRangeSettings();
+
+  // 刷新数据采集模块
+  await refreshDataModule(false);
+
+  // 绑定事件
+  bindAutoUpdate();
+  bindRangeValidation();
+
+  // 更新存储信息
+  await updateStorageInfo();
+});
+</script>
+</body>
+</html>

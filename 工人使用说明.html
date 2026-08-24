@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高速公路危害点照片采集 - 工人使用说明</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei","PingFang SC","Helvetica Neue",sans-serif;background:#f5f7fa;color:#333;line-height:1.8;padding:20px;max-width:800px;margin:0 auto}
+h1{text-align:center;color:#1565c0;font-size:24px;margin:30px 0 10px;padding-bottom:15px;border-bottom:3px solid #1565c0}
+h2{color:#1565c0;font-size:20px;margin:30px 0 15px;padding:10px 15px;background:linear-gradient(135deg,#e3f2fd,#bbdefb);border-radius:8px;border-left:4px solid #1565c0}
+h3{color:#333;font-size:16px;margin:20px 0 10px;padding-left:10px;border-left:3px solid #43a047}
+p{margin:8px 0;font-size:15px}
+ol,ul{margin:10px 0 10px 20px}
+li{margin:6px 0;font-size:15px}
+strong{color:#d32f2f}
+hr{border:none;border-top:1px solid #ddd;margin:30px 0}
+table{width:100%;border-collapse:collapse;margin:15px 0;font-size:14px}
+th{background:#1565c0;color:#fff;padding:10px;text-align:left}
+td{padding:8px 10px;border:1px solid #ddd}
+tr:nth-child(even){background:#f5f5f5}
+code{background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:13px;color:#d32f2f}
+.note{background:#fff3e0;border-left:4px solid #ff9800;padding:12px 15px;margin:15px 0;border-radius:0 8px 8px 0}
+.warning{background:#ffebee;border-left:4px solid #d32f2f;padding:12px 15px;margin:15px 0;border-radius:0 8px 8px 0}
+.tip{background:#e8f5e9;border-left:4px solid #43a047;padding:12px 15px;margin:15px 0;border-radius:0 8px 8px 0}
+.footer{text-align:center;color:#999;font-size:13px;margin-top:40px;padding-top:20px;border-top:1px solid #ddd}
+.step-num{display:inline-block;width:28px;height:28px;background:#1565c0;color:#fff;border-radius:50%;text-align:center;line-height:28px;font-size:14px;font-weight:bold;margin-right:8px}
+</style>
+</head>
+<body>
+
+<h1>高速公路危害点照片采集<br><small style="font-size:16px;color:#666">工人使用说明</small></h1>
+
+<h2>一、使用流程</h2>
+
+<h3><span class="step-num">1</span>打开表单</h3>
+<ul>
+<li>用手机浏览器打开 <code>form.html</code> 文件</li>
+<li>建议"添加到主屏幕"，以后像APP一样直接点击打开</li>
+</ul>
+<div class="tip">操作方法：在手机浏览器中点击"菜单" → "添加到主屏幕"，之后桌面会出现一个图标，点击即可打开</div>
+
+<h3><span class="step-num">2</span>选择路线</h3>
+<ol>
+<li>在"选择路线"下拉框中选择当前工作的路线</li>
+<li>如果是新路线，点击"新建线路"按钮，输入路线名称</li>
+<li>设置施工日期（默认今天）</li>
+<li>设置施工路段范围（起始和终止公里桩）</li>
+</ol>
+
+<h3><span class="step-num">3</span>填写位置信息</h3>
+<ol>
+<li><strong>公里桩</strong>（必填）：输入里程碑公里数，如 235</li>
+<li><strong>百米数</strong>（必填）：输入百米桩编号，如 040</li>
+<li><strong>上下行</strong>：选择上行或下行（默认上行）</li>
+<li><strong>车道</strong>：选择超车道/行车道/应急车道（默认行车道）</li>
+<li><strong>米数</strong>：输入精确米数，如 5.5（默认0）</li>
+<li><strong>备注</strong>：如有特殊情况可填写备注</li>
+</ol>
+
+<h3><span class="step-num">4</span>上传照片</h3>
+<ol>
+<li>点击"施工前"按钮，拍照或选择照片上传</li>
+<li>点击"施工中"按钮，上传施工中照片</li>
+<li>点击"施工后"按钮，上传施工后照片</li>
+<li>已上传的按钮变绿色，可以删除重传</li>
+<li>三张照片可以分多次上传，系统会自动记住</li>
+</ol>
+<div class="tip">照片上传后会自动压缩，不用担心占用太多空间</div>
+
+<h3><span class="step-num">5</span>提交</h3>
+<ol>
+<li>确认信息无误后，点击中间的圆形"提交"按钮</li>
+<li>提交后序号自动+1，可以继续采集下一个点</li>
+<li>如果同一位置有多道裂缝，序号会自动递增</li>
+</ol>
+
+<h3><span class="step-num">6</span>补充照片</h3>
+<ol>
+<li>如果某个点缺照片，点击下方的记录或序号圆点</li>
+<li>进入编辑模式，切换到缺失的阶段上传照片</li>
+<li>点击"保存修改"完成补充</li>
+</ol>
+
+<h3><span class="step-num">7</span>导出数据</h3>
+<ol>
+<li>每天工作结束后，点击底部"导出线路"按钮</li>
+<li>会下载两个文件：CSV表格 + ZIP照片包</li>
+<li>把文件传给管理人员</li>
+</ol>
+
+<hr>
+
+<h2>二、常见问题及解决方法</h2>
+
+<h3>问题1：照片上传失败</h3>
+<p><strong>原因</strong>：照片太大或浏览器不支持</p>
+<p><strong>解决</strong>：</p>
+<ul>
+<li>系统会自动压缩照片，如果还是失败，试试换一张照片</li>
+<li>确保手机浏览器是Chrome或Safari</li>
+<li>清除浏览器缓存后重试</li>
+</ul>
+
+<h3>问题2：页面打不开或显示异常</h3>
+<p><strong>原因</strong>：浏览器兼容性问题</p>
+<p><strong>解决</strong>：</p>
+<ul>
+<li>使用Chrome或Safari浏览器</li>
+<li>清除浏览器缓存</li>
+<li>重新打开文件</li>
+</ul>
+
+<h3>问题3：数据丢失</h3>
+<p><strong>原因</strong>：清除了浏览器数据或换了手机</p>
+<div class="warning"><strong>重要</strong>：数据存在手机浏览器里，清除浏览器数据会丢失！每天必须导出数据备份！</div>
+<p><strong>解决</strong>：</p>
+<ul>
+<li>如果数据丢失，只能重新采集</li>
+<li>预防措施：每天工作结束后立即导出数据</li>
+</ul>
+
+<h3>问题4：存储空间不足</h3>
+<p><strong>原因</strong>：照片太多，存储空间满了</p>
+<p><strong>解决</strong>：</p>
+<ul>
+<li>页面顶部会显示存储空间使用情况</li>
+<li>超过20MB会显示橙色警告</li>
+<li>超过40MB会显示红色警告，需要立即导出清空</li>
+<li>点击"清空记录"释放空间（先确保已导出数据）</li>
+</ul>
+
+<h3>问题5：序号不对</h3>
+<p><strong>原因</strong>：切换了路线但没有正确操作</p>
+<p><strong>解决</strong>：</p>
+<ul>
+<li>切换路线后，序号会自动重置</li>
+<li>如果序号不对，检查是否选对了路线</li>
+<li>可以在编辑模式中手动修改序号</li>
+</ul>
+
+<h3>问题6：照片找不到</h3>
+<p><strong>原因</strong>：导出的照片打包在ZIP文件中</p>
+<p><strong>解决</strong>：</p>
+<ul>
+<li>照片文件名包含位置信息，如 <code>00001_K235_000_横缝_1_前_5.5m.jpg</code></li>
+<li>根据文件名可以对应到表格中的记录</li>
+<li>自动编号（00001）与表格行号一一对应</li>
+</ul>
+
+<hr>
+
+<h2>三、每天导出数据的具体步骤</h2>
+
+<h3><span class="step-num">1</span>确认数据完整</h3>
+<ol>
+<li>检查所有采集的记录是否都有三张照片</li>
+<li>如果有缺失，先补充照片</li>
+<li>查看页面顶部的存储空间，确认数据量</li>
+</ol>
+
+<h3><span class="step-num">2</span>导出当前线路</h3>
+<ol>
+<li>确认当前选择的是正确的路线</li>
+<li>点击底部"导出线路"按钮</li>
+<li>手机会下载两个文件：
+<ul>
+<li><code>危害点采集记录_路线名称_日期.csv</code>（表格）</li>
+<li><code>危害点照片_路线名称_日期.zip</code>（照片包）</li>
+</ul>
+</li>
+</ol>
+
+<h3><span class="step-num">3</span>传输文件到电脑</h3>
+
+<p><strong>方法1：微信传输</strong></p>
+<ol>
+<li>打开微信"文件传输助手"</li>
+<li>发送下载的CSV和ZIP文件</li>
+<li>在电脑上接收文件</li>
+</ol>
+
+<p><strong>方法2：数据线传输</strong></p>
+<ol>
+<li>用数据线连接手机和电脑</li>
+<li>在手机文件夹中找到下载的文件</li>
+<li>复制到电脑</li>
+</ol>
+
+<p><strong>方法3：云盘传输</strong></p>
+<ol>
+<li>上传文件到百度网盘/腾讯微云</li>
+<li>在电脑上下载</li>
+</ol>
+
+<h3><span class="step-num">4</span>在电脑上查看</h3>
+<ol>
+<li>用Excel或WPS打开CSV文件</li>
+<li>解压ZIP文件查看照片</li>
+<li>核对数据是否完整</li>
+</ol>
+
+<h3><span class="step-num">5</span>清空手机数据（可选）</h3>
+<ol>
+<li>确认数据已安全传输到电脑</li>
+<li>点击底部"清空记录"按钮</li>
+<li>输入"清空"确认</li>
+<li>释放存储空间，准备第二天的采集</li>
+</ol>
+
+<hr>
+
+<h2>四、注意事项</h2>
+
+<div class="warning">
+<ol>
+<li><strong>每天必须导出数据</strong>：数据存在手机浏览器里，不清理会满</li>
+<li><strong>不要清除浏览器缓存</strong>：这会丢失所有数据</li>
+<li><strong>不要换手机使用</strong>：数据不会同步到新手机</li>
+</ol>
+</div>
+
+<div class="tip">
+<ol start="4">
+<li><strong>照片分三次上传没问题</strong>：系统会自动合并到同一条记录</li>
+<li><strong>新建路线时注意修改公里桩和百米数</strong>：系统会保留上次的位置信息</li>
+<li><strong>提交前检查照片</strong>：确保三张照片都上传成功</li>
+<li><strong>序号圆点可以点击</strong>：快速跳转到对应记录进行编辑</li>
+</ol>
+</div>
+
+<hr>
+
+<h2>五、快速操作指南</h2>
+
+<table>
+<tr><th>操作</th><th>方法</th></tr>
+<tr><td>打开表单</td><td>点击手机主屏幕的图标</td></tr>
+<tr><td>切换路线</td><td>下拉框选择或点击"新建线路"</td></tr>
+<tr><td>上传照片</td><td>点击对应阶段的按钮（施工前/施工中/施工后）</td></tr>
+<tr><td>提交记录</td><td>点击中间的圆形按钮</td></tr>
+<tr><td>补充照片</td><td>点击记录或序号圆点</td></tr>
+<tr><td>导出数据</td><td>点击底部"导出线路"</td></tr>
+<tr><td>清空数据</td><td>点击底部"清空记录"</td></tr>
+<tr><td>查看全部记录</td><td>点击底部"查看记录"</td></tr>
+</table>
+
+<div class="footer">
+<p>如有问题，请联系管理人员</p>
+</div>
+
+</body>
+</html>
