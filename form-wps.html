@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>高速公路危害点照片采集（WPS版）</title>
+<title>高速公路危害点照片采集（WPS照片大小可调版）</title>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -37,8 +37,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .field input[readonly]{background:#f0f0f0;color:#888;cursor:not-allowed}
 .field-row{display:flex;gap:10px}
 .field-row .field{flex:1}
-.photo-upload{position:relative;border:2px dashed #ddd;border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:#fafafa}
-.photo-upload:hover{border-color:#1a73e8;background:#f0f7ff}
 .photo-btns{display:flex;gap:10px;margin-bottom:10px}
 .photo-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:14px 8px;border:2px solid #ddd;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;background:#fafafa;color:#666;user-select:none;position:relative;overflow:hidden;-webkit-appearance:none;appearance:none;font-family:inherit;outline:none}
 .photo-btn input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
@@ -92,6 +90,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .sync-log-item.success{color:#2e7d32}
 .sync-log-item.error{color:#c62828}
 .sync-log-item.pending{color:#ff9800}
+.photo-size-btn{background:none;border:1px solid #1a73e8;border-radius:6px;padding:4px 12px;font-size:12px;color:#1a73e8;cursor:pointer;margin-left:8px}
+.photo-size-btn:active{background:#e3f2fd}
+.photo-size-current{font-size:11px;color:#1a73e8;margin-top:4px}
+.size-preset-btns{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.size-preset-btn{padding:10px 16px;border:2px solid #ddd;border-radius:8px;background:#fff;font-size:14px;cursor:pointer;transition:all .2s;flex:1;min-width:80px;text-align:center}
+.size-preset-btn.active{border-color:#1a73e8;background:#e3f2fd;color:#1565c0;font-weight:600}
+.size-preset-btn:active{transform:scale(.97)}
+.custom-size-row{display:flex;gap:8px;align-items:center;margin-top:10px}
+.custom-size-row input{flex:1;padding:10px;border:1.5px solid #ddd;border-radius:8px;font-size:15px}
+.custom-size-row span{font-size:14px;color:#666;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -217,9 +225,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
       <div class="stage-btn" id="stageBtnMid" onclick="switchStage('Mid')">施工中</div>
       <div class="stage-btn" id="stageBtnPost" onclick="switchStage('Post')">施工后</div>
     </div>
-    <div style="text-align:right;margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <button class="photo-size-btn" onclick="showPhotoSizeSettings()">照片大小设置</button>
       <button onclick="confirmResetPhotos()" style="background:none;border:1px solid #ddd;border-radius:6px;padding:4px 12px;font-size:12px;color:#999;cursor:pointer">清除所有照片</button>
     </div>
+    <div class="photo-size-current" id="photoSizeCurrent">当前照片大小限制：2MB</div>
     <div class="photo-btns" id="photoBtns">
       <button type="button" class="photo-btn camera" onclick="openCamera()">
         <span>📷 拍照</span>
@@ -298,6 +308,34 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
   </div>
 </div>
 
+<!-- 照片大小设置弹窗 -->
+<div class="modal-overlay" id="photoSizeModal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="modal" style="max-width:380px">
+    <button class="close-btn" onclick="document.getElementById('photoSizeModal').classList.remove('show')">&times;</button>
+    <h3>照片大小设置</h3>
+    <p style="color:#666;font-size:13px;margin-bottom:12px;line-height:1.6">选择照片压缩后的大小上限，越小越省空间，越大越清晰</p>
+    <div class="size-preset-btns" id="sizePresetBtns">
+      <div class="size-preset-btn" onclick="setPhotoSize(200)">200KB</div>
+      <div class="size-preset-btn" onclick="setPhotoSize(500)">500KB</div>
+      <div class="size-preset-btn" onclick="setPhotoSize(1024)">1MB</div>
+      <div class="size-preset-btn" onclick="setPhotoSize(2048)">2MB</div>
+      <div class="size-preset-btn" onclick="setPhotoSize(5120)">5MB</div>
+      <div class="size-preset-btn" onclick="setPhotoSize(10240)">10MB</div>
+    </div>
+    <div style="border-top:1px solid #eee;padding-top:12px;margin-top:4px">
+      <p style="color:#666;font-size:12px;margin-bottom:8px">自定义大小（KB）：</p>
+      <div class="custom-size-row">
+        <input type="number" id="customSizeInput" min="50" max="51200" placeholder="输入数值">
+        <span>KB</span>
+        <button onclick="applyCustomSize()" style="padding:10px 16px;border:none;border-radius:8px;background:#1a73e8;color:#fff;font-size:14px;cursor:pointer;white-space:nowrap">确定</button>
+      </div>
+    </div>
+    <div style="margin-top:12px;padding:10px;background:#f5f5f5;border-radius:8px;font-size:12px;color:#666;line-height:1.6">
+      <strong>提示：</strong>WPS版建议设置为 200KB~2MB。WPS多维表格对单条记录大小有限制，过大的照片可能上传失败。
+    </div>
+  </div>
+</div>
+
 <!-- Toast提示 -->
 <div class="toast" id="toast"></div>
 
@@ -311,6 +349,54 @@ const STAGE_LABEL = { 'Pre': '施工前', 'Mid': '施工中', 'Post': '施工后
 const STAGE_NAMES = ['Pre', 'Mid', 'Post'];
 const ROUTES_KEY = 'highway_routes_wps';
 const WPS_CONFIG_KEY = 'highway_wps_config';
+const PHOTO_SIZE_KEY = 'highway_wps_photo_size_kb';
+
+// ========== 照片大小设置 ==========
+function getPhotoSizeSetting() {
+  const saved = localStorage.getItem(PHOTO_SIZE_KEY);
+  return saved ? parseInt(saved) : 2048;
+}
+
+function savePhotoSizeSetting(sizeKB) {
+  localStorage.setItem(PHOTO_SIZE_KEY, String(sizeKB));
+}
+
+function formatSizeDisplay(sizeKB) {
+  if (sizeKB >= 1024) return (sizeKB / 1024).toFixed(1) + 'MB';
+  return sizeKB + 'KB';
+}
+
+function showPhotoSizeSettings() {
+  const modal = document.getElementById('photoSizeModal');
+  modal.classList.add('show');
+  const currentKB = getPhotoSizeSetting();
+  document.getElementById('customSizeInput').value = currentKB;
+  const presetValues = [200, 500, 1024, 2048, 5120, 10240];
+  const btns = document.querySelectorAll('#sizePresetBtns .size-preset-btn');
+  btns.forEach((btn, i) => {
+    btn.classList.toggle('active', presetValues[i] === currentKB);
+  });
+}
+
+function setPhotoSize(sizeKB) {
+  savePhotoSizeSetting(sizeKB);
+  updatePhotoSizeDisplay();
+  document.getElementById('photoSizeModal').classList.remove('show');
+  showToast(`照片大小已设置为 ${formatSizeDisplay(sizeKB)}`, 'success');
+}
+
+function applyCustomSize() {
+  const input = document.getElementById('customSizeInput');
+  const val = parseInt(input.value);
+  if (!val || val < 50) { showToast('最小为50KB', 'error'); return; }
+  if (val > 51200) { showToast('最大为50MB', 'error'); return; }
+  setPhotoSize(val);
+}
+
+function updatePhotoSizeDisplay() {
+  const el = document.getElementById('photoSizeCurrent');
+  if (el) el.textContent = `当前照片大小限制：${formatSizeDisplay(getPhotoSizeSetting())}`;
+}
 
 // ========== 全局状态 ==========
 let db = null;
@@ -979,7 +1065,6 @@ function updateStageButtons() {
 }
 
 function showCurrentStagePhoto() {
-  const label = STAGE_LABEL[currentStage];
   if (photoData[currentStage]) {
     document.getElementById('photoImg').src = photoData[currentStage];
     document.getElementById('photoPreview').style.display = 'block';
@@ -1011,21 +1096,23 @@ function openCamera() {
 function handlePhoto(input) {
   const file = input.files[0];
   if (!file) return;
-  if (file.size > 10 * 1024 * 1024) {
-    showToast('照片过大，请选择10MB以内的图片', 'error');
+  if (file.size > 50 * 1024 * 1024) {
+    showToast('照片过大，请选择50MB以内的图片', 'error');
     input.value = '';
     return;
   }
+  const maxSizeKB = getPhotoSizeSetting();
+  const maxSizeBytes = maxSizeKB * 1024;
   const reader = new FileReader();
   reader.onload = function(e) {
-    compressImageToMaxSize(e.target.result, 2 * 1024 * 1024, (compressed) => {
+    compressImageToMaxSize(e.target.result, maxSizeBytes, (compressed) => {
       photoData[currentStage] = compressed;
       updateStageButtons();
       document.getElementById('photoImg').src = compressed;
       document.getElementById('photoPreview').style.display = 'block';
       document.getElementById('photoBtns').style.display = 'none';
       const sizeKB = Math.round(compressed.length * 0.75 / 1024);
-      showToast(`照片已压缩（约${sizeKB}KB）`, 'success');
+      showToast(`照片已压缩（约${sizeKB}KB，限制${formatSizeDisplay(maxSizeKB)}）`, 'success');
     });
   };
   reader.readAsDataURL(file);
@@ -1694,9 +1781,10 @@ async function init() {
     
     await refreshDataModule(false);
     await updateStorageInfo();
+    updatePhotoSizeDisplay();
 
     bindAutoUpdate();
-    
+
   } catch (err) {
     console.error('初始化失败：', err);
     showToast('初始化失败：' + err.message, 'error');
