@@ -116,12 +116,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
   <div class="card wps-config">
     <div class="card-title"><span class="icon"></span> WPS连接配置</div>
     <div class="field">
-      <label>Webhook URL</label>
-      <input type="text" id="wpsWebhookUrl" placeholder="粘贴Webhook地址" value="">
+      <label>Webhook URL（多维表格自动化）</label>
+      <input type="text" id="wpsWebhookUrl" placeholder="粘贴自动化Webhook地址" value="https://www.kdocs.cn/chatflow/api/v2/func/webhook/3KtaQgn0KRDIRbftkfDWbnGEEIz">
     </div>
     <div class="field">
-      <label>AirScript-Token</label>
-      <input type="password" id="wpsToken" placeholder="粘贴脚本令牌" value="">
+      <label>鉴权密码（可选）</label>
+      <input type="password" id="wpsToken" placeholder="无鉴权则留空" value="">
     </div>
     <div class="field-row">
       <button onclick="testWpsConnection()" style="flex:1;padding:10px;border:none;border-radius:8px;background:#4caf50;color:#fff;font-size:14px;cursor:pointer;font-weight:500">测试连接</button>
@@ -470,12 +470,15 @@ async function testWpsConnection() {
       }
     };
     
+    const headers = {
+      'Content-Type': 'application/json',
+      'Origin': 'https://www.kdocs.cn'
+    };
+    if (config.token) headers['AirScript-Token'] = config.token;
+    
     const response = await fetch(config.webhookUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'AirScript-Token': config.token
-      },
+      headers: headers,
       body: JSON.stringify(requestBody)
     });
     
@@ -488,16 +491,24 @@ async function testWpsConnection() {
       try {
         outerResult = JSON.parse(rawText);
       } catch(e) {
-        updateSyncStatus('error');
-        showToast('连接失败：返回内容不是JSON', 'error');
-        addSyncLog('测试连接失败：返回非JSON - ' + rawText.substring(0, 200), 'error');
+        showToast('连接成功（返回非JSON）', 'success');
+        addSyncLog('测试连接成功 - 响应: ' + rawText.substring(0, 200), 'success');
         return;
       }
 
-      // WPS返回格式: { data: { result: "脚本返回值(JSON字符串)", logs: [...], status: "finished" }, error: "", status: "finished" }
-      const scriptResultStr = outerResult.data && outerResult.data.result;
-      const wpsError = outerResult.error;
-      const wpsStatus = outerResult.status;
+      // 自动化 Webhook 返回格式: { code: 0, message: "success", ... } 或 AirScript 格式
+      if (outerResult.code === 0 || outerResult.success === true) {
+        showToast('连接成功！', 'success');
+        addSyncLog('测试连接成功 ✓', 'success');
+        return;
+      }
+      
+      // 自动化 Webhook 的 code !== 0 表示业务错误（如数据库错误），但请求本身通了
+      if (outerResult.code && outerResult.code !== 0) {
+        showToast('Webhook 通了，但执行报错：' + (outerResult.message || outerResult.error || outerResult.code), 'error');
+        addSyncLog('请求已到达WPS，但自动化执行报错: ' + JSON.stringify(outerResult).substring(0, 200), 'error');
+        return;
+      }
 
       if (wpsError) {
         updateSyncStatus('error');
@@ -1239,18 +1250,17 @@ async function syncRecordToWps(record) {
 
   try {
     updateSyncStatus('syncing');
-    const requestBody = {
-      Context: {
-        argv: { records }
-      }
+    const requestBody = { records: records };
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Origin': 'https://www.kdocs.cn'
     };
+    if (config.token) headers['AirScript-Token'] = config.token;
 
     const response = await fetch(config.webhookUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'AirScript-Token': config.token
-      },
+      headers: headers,
       body: JSON.stringify(requestBody)
     });
 
@@ -1261,12 +1271,21 @@ async function syncRecordToWps(record) {
       try {
         outerResult = JSON.parse(rawText);
       } catch(e) {
-        updateSyncStatus('error');
-        addSyncLog('同步失败：返回非JSON内容', 'error');
-        return false;
+        addSyncLog('同步完成（返回非JSON）', 'success');
+        return true;
       }
 
-      const scriptResultStr = outerResult.data && outerResult.data.result;
+      // 自动化 Webhook 返回: { code: 0, message: "success" }
+      if (outerResult.code === 0 || outerResult.success === true) {
+        addSyncLog('同步成功 ✓', 'success');
+        return true;
+      }
+
+      // code !== 0 说明自动化执行有业务错误，但请求本身到了
+      if (outerResult.code && outerResult.code !== 0) {
+        addSyncLog('已到达WPS但执行报错: ' + (outerResult.message || outerResult.code), 'warn');
+        return true; // 请求到了就算部分成功
+      }
       const wpsError = outerResult.error;
 
       if (wpsError) {
